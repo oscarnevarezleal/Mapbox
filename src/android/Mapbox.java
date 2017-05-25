@@ -183,9 +183,7 @@ public class Mapbox extends CordovaPlugin {
 
 
                         mapView = new MapView(webView.getContext(), mapboxOptions);
-                        // need to do this to register a receiver which onPause later needs
-                        mapView.onResume();
-                        mapView.onCreate(null);
+
                         mapView.setStyleUrl(style);
                         mapView.setLayoutParams(params);
 
@@ -199,6 +197,11 @@ public class Mapbox extends CordovaPlugin {
 
                             }
                         });
+
+                        // Need to do this to register a receiver which onPause later needs
+                        // If no style has been set by the time you call MapView#onResume, it will load the default style
+                        mapView.onResume();
+                        mapView.onCreate(null);
 
                         // position the mapView overlay
                         layout.addView(mapView);
