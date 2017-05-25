@@ -110,7 +110,7 @@ public class Mapbox extends CordovaPlugin {
         try {
             if (ACTION_SHOW.equals(action)) {
                 final JSONObject options = args.getJSONObject(0);
-                final String style = getStyle(options.optString("style"));
+                final String style = getStyle(options.optString("style", Style.LIGHT));
 
                 final JSONObject margins = options.isNull("margins") ? null : options.getJSONObject("margins");
                 final int left = applyRetinaFactor(margins == null || margins.isNull("left") ? 0 : margins.getInt("left"));
