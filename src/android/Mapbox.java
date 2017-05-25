@@ -173,11 +173,21 @@ public class Mapbox extends CordovaPlugin {
                             e.printStackTrace();
                         }
 
+                        final FrameLayout layout = (FrameLayout) webView.getView().getParent();
+
+                        int webViewWidth = webView.getView().getWidth();
+                        int webViewHeight = webView.getView().getHeight();
+
+                        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(webViewWidth - left - right, webViewHeight - top - bottom);
+                        params.setMargins(left, top, right, bottom);
+
+
                         mapView = new MapView(webView.getContext(), mapboxOptions);
                         // need to do this to register a receiver which onPause later needs
                         mapView.onResume();
                         mapView.onCreate(null);
                         mapView.setStyleUrl(style);
+                        mapView.setLayoutParams(params);
 
                         // https://www.mapbox.com/help/mapview-mapboxmap/
                         mapView.getMapAsync(new OnMapReadyCallback() {
@@ -185,20 +195,13 @@ public class Mapbox extends CordovaPlugin {
                             public void onMapReady(@NonNull MapboxMap _mapboxMap) {
                                 mapboxMap = _mapboxMap;
 
-                                // position the mapView overlay
-                                int webViewWidth = webView.getView().getWidth();
-                                int webViewHeight = webView.getView().getHeight();
-                                final FrameLayout layout = (FrameLayout) webView.getView().getParent();
-                                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(webViewWidth - left - right, webViewHeight - top - bottom);
-                                params.setMargins(left, top, right, bottom);
-                                mapView.setLayoutParams(params);
-
-                                layout.addView(mapView);
                                 callbackContext.success();
-                                
+
                             }
                         });
 
+                        // position the mapView overlay
+                        layout.addView(mapView);
 
                     }
                 });
