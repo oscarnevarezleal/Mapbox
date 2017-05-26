@@ -14,6 +14,7 @@ import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.camera.CameraUpdate;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.constants.Style;
 import com.mapbox.mapboxsdk.geometry.LatLng;
@@ -110,7 +111,7 @@ public class Mapbox extends CordovaPlugin {
         try {
             if (ACTION_SHOW.equals(action)) {
                 final JSONObject options = args.getJSONObject(0);
-                final String style = getStyle(options.optString("style", Style.LIGHT));
+                final String style = getStyle(options.optString("style", Style.MAPBOX_STREETS));
 
                 final JSONObject margins = options.isNull("margins") ? null : options.getJSONObject("margins");
                 final int left = applyRetinaFactor(margins == null || margins.isNull("left") ? 0 : margins.getInt("left"));
@@ -154,14 +155,22 @@ public class Mapbox extends CordovaPlugin {
                             if (center != null) {
                                 final double lat = center.getDouble("lat");
                                 final double lng = center.getDouble("lng");
-                                //@todo migrate
-                                //mapView.setLatLng(new LatLngZoom(lat, lng, zoomLevel));
+
+                                CameraPosition position = new CameraPosition.Builder()
+                                        .target(new LatLng(lat, lng)) // Sets the new camera position
+                                        .bearing(180) // Rotate the camera
+                                        .zoom(zoomLevel)
+                                        .build(); // Creates a CameraPosition from the builder
+                                mapboxMap.setCameraPosition(position);
                             } else {
                                 if (zoomLevel > 18.0) {
                                     zoomLevel = 18.0f;
                                 }
-                                //@todo migrate
-                                //mapView.setZoom(zoomLevel);
+
+                                CameraPosition position = new CameraPosition.Builder()
+                                        .zoom(zoomLevel)
+                                        .build(); // Creates a CameraPosition from the builder
+                                mapboxMap.setCameraPosition(position);
                             }
 
                             if (options.has("markers")) {
@@ -244,8 +253,15 @@ public class Mapbox extends CordovaPlugin {
                                 final double zoom = options.getDouble("level");
                                 if (zoom >= 0 && zoom <= 20) {
                                     final boolean animated = !options.isNull("animated") && options.getBoolean("animated");
-                                    //@todo migrate second param , animated
-                                    mapView.setCameraDistance((float) zoom);
+                                    CameraPosition position = new CameraPosition.Builder()
+                                            .zoom(zoom)
+                                            .build();
+                                    CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(position);
+                                    if (animated) {
+                                        mapboxMap.animateCamera(cameraUpdate);
+                                    } else {
+                                        mapboxMap.moveCamera(cameraUpdate);
+                                    }
                                     callbackContext.success();
                                 } else {
                                     callbackContext.error("invalid zoomlevel, use any double value from 0 to 20 (like 8.3)");
@@ -288,7 +304,7 @@ public class Mapbox extends CordovaPlugin {
                                         .build(); // Creates a CameraPosition from the builder
 
                                 mapboxMap.animateCamera(CameraUpdateFactory
-                                        .newCameraPosition(position), (options.optInt("duration", 15)) * 1000);
+                                        .newCameraPosition(position), (options.optInt("duration", 3)) * 1000);
 
                                 callbackContext.success();
                             } catch (JSONException e) {
@@ -303,8 +319,7 @@ public class Mapbox extends CordovaPlugin {
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            //@todo mapView.getTilt();
-                            final double tilt = 0f;
+                            final double tilt = mapboxMap.getCameraPosition().tilt;
                             callbackContext.success("" + tilt);
                         }
                     });
@@ -318,12 +333,15 @@ public class Mapbox extends CordovaPlugin {
                             try {
                                 final JSONObject options = args.getJSONObject(0);
 
-                                /**
-                                 * @todo Pending
-                                 * mapView.setTilt(
-                                options.optDouble("pitch", 20),      // default 20
-                                options.optLong("duration", 5000)); // default 5s
-                                 */
+                                CameraPosition position = new CameraPosition.Builder()
+                                        .tilt(options.optDouble("pitch", 20))
+                                        .build();
+
+                                mapboxMap.animateCamera(
+                                        CameraUpdateFactory.newCameraPosition(position),
+                                        (options.optInt("duration", 5)) * 1000, // default 5 seconds
+                                        null);
+
                                 callbackContext.success();
                             } catch (JSONException e) {
                                 callbackContext.error(e.getMessage());
@@ -361,7 +379,7 @@ public class Mapbox extends CordovaPlugin {
 
                                 mapboxMap.animateCamera(
                                         CameraUpdateFactory.newCameraPosition(builder.build()),
-                                        (options.optInt("duration", 15)) * 1000, // default 15 seconds
+                                        (options.optInt("duration", 3)) * 1000, // default 15 seconds
                                         null);
 
                                 callbackContext.success();
