@@ -130,57 +130,9 @@ public class Mapbox extends CordovaPlugin {
                             callbackContext.error(MAPBOX_ACCESSTOKEN_RESOURCE_KEY + " not set in strings.xml");
                             return;
                         }
-                        MapboxMapOptions mapboxOptions = new MapboxMapOptions();
+                        final MapboxMapOptions mapboxOptions = new MapboxMapOptions();
                         mapboxOptions.accessToken(accessToken);
-                        try {
-                            mapboxOptions.compassEnabled(options.isNull("hideCompass") || !options.getBoolean("hideCompass"));
-                            mapboxOptions.scrollGesturesEnabled(options.isNull("disableScroll") || !options.getBoolean("disableScroll"));
-                            mapboxOptions.zoomControlsEnabled(options.isNull("disableZoom") || !options.getBoolean("disableZoom"));
-                            mapboxOptions.tiltGesturesEnabled(options.isNull("disableTilt") || !options.getBoolean("disableTilt"));
 
-                            // placing these offscreen in case the user wants to hide them
-                            if (!options.isNull("hideAttribution") && options.getBoolean("hideAttribution")) {
-                                mapboxOptions.attributionMargins(new int[]{-300, 0, 0, 0});
-                            }
-                            if (!options.isNull("hideLogo") && options.getBoolean("hideLogo")) {
-                                mapboxOptions.logoMargins(new int[]{-300, 0, 0, 0});
-                            }
-
-                            if (showUserLocation) {
-                                showUserLocation();
-                            }
-
-                            Double zoom = options.isNull("zoomLevel") ? 10 : options.getDouble("zoomLevel");
-                            float zoomLevel = zoom.floatValue();
-                            if (center != null) {
-                                final double lat = center.getDouble("lat");
-                                final double lng = center.getDouble("lng");
-
-                                CameraPosition position = new CameraPosition.Builder()
-                                        .target(new LatLng(lat, lng)) // Sets the new camera position
-                                        .bearing(180) // Rotate the camera
-                                        .zoom(zoomLevel)
-                                        .build(); // Creates a CameraPosition from the builder
-                                mapboxMap.setCameraPosition(position);
-                            } else {
-                                if (zoomLevel > 18.0) {
-                                    zoomLevel = 18.0f;
-                                }
-
-                                CameraPosition position = new CameraPosition.Builder()
-                                        .zoom(zoomLevel)
-                                        .build(); // Creates a CameraPosition from the builder
-                                mapboxMap.setCameraPosition(position);
-                            }
-
-                            if (options.has("markers")) {
-                                addMarkers(options.getJSONArray("markers"));
-                            }
-
-                        } catch (JSONException e) {
-                            callbackContext.error(e.getMessage());
-                            e.printStackTrace();
-                        }
 
                         final FrameLayout layout = (FrameLayout) webView.getView().getParent();
 
@@ -201,6 +153,56 @@ public class Mapbox extends CordovaPlugin {
                             @Override
                             public void onMapReady(@NonNull MapboxMap _mapboxMap) {
                                 mapboxMap = _mapboxMap;
+
+                                try {
+                                    mapboxOptions.compassEnabled(options.isNull("hideCompass") || !options.getBoolean("hideCompass"));
+                                    mapboxOptions.scrollGesturesEnabled(options.isNull("disableScroll") || !options.getBoolean("disableScroll"));
+                                    mapboxOptions.zoomControlsEnabled(options.isNull("disableZoom") || !options.getBoolean("disableZoom"));
+                                    mapboxOptions.tiltGesturesEnabled(options.isNull("disableTilt") || !options.getBoolean("disableTilt"));
+
+                                    // placing these offscreen in case the user wants to hide them
+                                    if (!options.isNull("hideAttribution") && options.getBoolean("hideAttribution")) {
+                                        mapboxOptions.attributionMargins(new int[]{-300, 0, 0, 0});
+                                    }
+                                    if (!options.isNull("hideLogo") && options.getBoolean("hideLogo")) {
+                                        mapboxOptions.logoMargins(new int[]{-300, 0, 0, 0});
+                                    }
+
+                                    if (showUserLocation) {
+                                        showUserLocation();
+                                    }
+
+                                    Double zoom = options.isNull("zoomLevel") ? 10 : options.getDouble("zoomLevel");
+                                    float zoomLevel = zoom.floatValue();
+                                    if (center != null) {
+                                        final double lat = center.getDouble("lat");
+                                        final double lng = center.getDouble("lng");
+
+                                        CameraPosition position = new CameraPosition.Builder()
+                                                .target(new LatLng(lat, lng)) // Sets the new camera position
+                                                .bearing(180) // Rotate the camera
+                                                .zoom(zoomLevel)
+                                                .build(); // Creates a CameraPosition from the builder
+                                        mapboxMap.setCameraPosition(position);
+                                    } else {
+                                        if (zoomLevel > 18.0) {
+                                            zoomLevel = 18.0f;
+                                        }
+
+                                        CameraPosition position = new CameraPosition.Builder()
+                                                .zoom(zoomLevel)
+                                                .build(); // Creates a CameraPosition from the builder
+                                        mapboxMap.setCameraPosition(position);
+                                    }
+
+                                    if (options.has("markers")) {
+                                        addMarkers(options.getJSONArray("markers"));
+                                    }
+
+                                } catch (JSONException e) {
+                                    callbackContext.error(e.getMessage());
+                                    e.printStackTrace();
+                                }
 
                                 callbackContext.success();
 
