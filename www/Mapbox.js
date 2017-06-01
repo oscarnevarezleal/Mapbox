@@ -8,6 +8,10 @@ module.exports = {
   hide: function (options, successCallback, errorCallback) {
     cordova.exec(successCallback, errorCallback, "Mapbox", "hide", [options]);
   },
+  
+  moveMarker: function (options, successCallback, errorCallback) {
+    cordova.exec(successCallback, errorCallback, "Mapbox", "moveMarker", [options]);
+  },
 
   addMarkers: function (options, successCallback, errorCallback) {
     cordova.exec(successCallback, errorCallback, "Mapbox", "addMarkers", [options]);
