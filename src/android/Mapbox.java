@@ -457,13 +457,10 @@ public class Mapbox extends CordovaPlugin {
 
             } else if (ACTION_REMOVE_ALL_MARKERS.equals(action)) {
                 if (mapboxMap != null) {
-                    cordova.getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mapboxMap.removeAnnotations();
-                            callbackContext.success();
-                        }
-                    });
+
+                    mapboxMap.removeAnnotations();
+                    callbackContext.success();
+
                 }
 
             } else if (ACTION_ADD_MARKER_CALLBACK.equals(action)) {
