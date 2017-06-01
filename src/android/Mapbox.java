@@ -34,6 +34,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -56,6 +57,7 @@ public class Mapbox extends CordovaPlugin {
     private static final String ACTION_SHOW = "show";
     private static final String ACTION_HIDE = "hide";
     private static final String ACTION_ADD_MARKERS = "addMarkers";
+    private static final String ACTION_MOVE_MARKER = "moveMarker";
     private static final String ACTION_REMOVE_ALL_MARKERS = "removeAllMarkers";
     private static final String ACTION_ADD_MARKER_CALLBACK = "addMarkerCallback";
     // TODO:
@@ -221,7 +223,7 @@ public class Mapbox extends CordovaPlugin {
                 });
 
             } else if (ACTION_HIDE.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -235,7 +237,7 @@ public class Mapbox extends CordovaPlugin {
                 }
 
             } else if (ACTION_GET_ZOOMLEVEL.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -246,7 +248,7 @@ public class Mapbox extends CordovaPlugin {
                 }
 
             } else if (ACTION_SET_ZOOMLEVEL.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -276,7 +278,7 @@ public class Mapbox extends CordovaPlugin {
                 }
 
             } else if (ACTION_GET_CENTER.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -290,7 +292,7 @@ public class Mapbox extends CordovaPlugin {
                 }
 
             } else if (ACTION_SET_CENTER.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -317,7 +319,7 @@ public class Mapbox extends CordovaPlugin {
                 }
 
             } else if (ACTION_GET_TILT.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -328,7 +330,7 @@ public class Mapbox extends CordovaPlugin {
                 }
 
             } else if (ACTION_SET_TILT.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -353,7 +355,7 @@ public class Mapbox extends CordovaPlugin {
                 }
 
             } else if (ACTION_ANIMATE_CAMERA.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -423,6 +425,23 @@ public class Mapbox extends CordovaPlugin {
                     }
                 });
 
+            } else if (ACTION_MOVE_MARKER.equals(action)) {
+                cordova.getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            final JSONObject position = args.getJSONObject(0);
+                            int index = args.getInt(1);
+                            List<Marker> markers = mapboxMap.getMarkers();
+                            Marker marker = markers.get(index);
+                            marker.setPosition(new LatLng(position.getDouble("lat"), position.getDouble("lng")));
+                            callbackContext.success();
+                        } catch (JSONException e) {
+                            callbackContext.error(e.getMessage());
+                        }
+                    }
+                });
+
             } else if (ACTION_ADD_MARKERS.equals(action)) {
                 cordova.getActivity().runOnUiThread(new Runnable() {
                     @Override
@@ -437,7 +456,7 @@ public class Mapbox extends CordovaPlugin {
                 });
 
             } else if (ACTION_REMOVE_ALL_MARKERS.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -452,17 +471,17 @@ public class Mapbox extends CordovaPlugin {
                 mapboxMap.setOnInfoWindowClickListener(new MarkerClickListener());
 
             } else if (ACTION_ON_REGION_WILL_CHANGE.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     mapView.addOnMapChangedListener(new RegionWillChangeListener(callbackContext));
                 }
 
             } else if (ACTION_ON_REGION_IS_CHANGING.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     mapView.addOnMapChangedListener(new RegionIsChangingListener(callbackContext));
                 }
 
             } else if (ACTION_ON_REGION_DID_CHANGE.equals(action)) {
-                if (mapView != null) {
+                if (mapboxMap != null) {
                     mapView.addOnMapChangedListener(new RegionDidChangeListener(callbackContext));
                 }
 
@@ -515,27 +534,22 @@ public class Mapbox extends CordovaPlugin {
         public void onMapChanged(int change) {
             if (change == MapView.REGION_IS_CHANGING) {
 
-                cordova.getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                    PluginResult pluginResult;
-                    final JSONObject json = new JSONObject();
-                    try {
-                        CameraPosition cm = mapboxMap.getCameraPosition();
-                        json.put("lat", cm.target.getLatitude());
-                        json.put("lng", cm.target.getLongitude());
+                PluginResult pluginResult;
+                final JSONObject json = new JSONObject();
+                try {
+                    CameraPosition cm = mapboxMap.getCameraPosition();
+                    json.put("lat", cm.target.getLatitude());
+                    json.put("lng", cm.target.getLongitude());
 
-                        pluginResult = new PluginResult(PluginResult.Status.OK, json);
-                        pluginResult.setKeepCallback(true);
-                        callback.sendPluginResult(pluginResult);
-                    } catch (JSONException e) {
-                        pluginResult = new PluginResult(PluginResult.Status.ERROR,
-                                "Error in callback of " + ACTION_ON_REGION_IS_CHANGING + ": " + e.getMessage());
-                        pluginResult.setKeepCallback(true);
-                        callback.sendPluginResult(pluginResult);
-                    }
-                    }
-                });
+                    pluginResult = new PluginResult(PluginResult.Status.OK, json);
+                    pluginResult.setKeepCallback(true);
+                    callback.sendPluginResult(pluginResult);
+                } catch (JSONException e) {
+                    pluginResult = new PluginResult(PluginResult.Status.ERROR,
+                            "Error in callback of " + ACTION_ON_REGION_IS_CHANGING + ": " + e.getMessage());
+                    pluginResult.setKeepCallback(true);
+                    callback.sendPluginResult(pluginResult);
+                }
 
             }
         }
@@ -653,19 +667,19 @@ public class Mapbox extends CordovaPlugin {
     }
 
     public void onPause(boolean multitasking) {
-        if (mapView != null) {
+        if (mapboxMap != null) {
             mapView.onPause();
         }
     }
 
     public void onResume(boolean multitasking) {
-        if (mapView != null) {
+        if (mapboxMap != null) {
             mapView.onResume();
         }
     }
 
     public void onDestroy() {
-        if (mapView != null) {
+        if (mapboxMap != null) {
             mapView.onDestroy();
         }
     }
