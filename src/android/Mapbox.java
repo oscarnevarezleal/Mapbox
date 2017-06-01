@@ -462,7 +462,7 @@ public class Mapbox extends CordovaPlugin {
                     @Override
                     public void run() {
                         try {
-                            final List<Long> markerList = addMarkers(args.getJSONArray(0));
+                            final List<String> markerList = addMarkers(args.getJSONArray(0));
                             JSONObject json = new JSONObject();
                             json.put("markers", markerList.toArray());
                             callbackContext.success(json);
@@ -512,8 +512,8 @@ public class Mapbox extends CordovaPlugin {
         return true;
     }
 
-    private List<Long> addMarkers(JSONArray markers) throws JSONException {
-        List<Long> markerList = new ArrayList<Long>();
+    private List<String> addMarkers(JSONArray markers) throws JSONException {
+        List<String> markerList = new ArrayList<String>();
 
         for (int i = 0; i < markers.length(); i++) {
             final JSONObject marker = markers.getJSONObject(i);
@@ -522,7 +522,7 @@ public class Mapbox extends CordovaPlugin {
             mo.snippet(marker.isNull("subtitle") ? null : marker.getString("subtitle"));
             mo.position(new LatLng(marker.getDouble("lat"), marker.getDouble("lng")));
             final Marker markerObject = mapboxMap.addMarker(mo);
-            markerList.add(i, markerObject.getId());
+            markerList.add(i, String.valueOf(markerObject.getId()));
         }
 
         return markerList;
