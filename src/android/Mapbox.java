@@ -514,9 +514,29 @@ public class Mapbox extends CordovaPlugin {
         @Override
         public void onMapChanged(int change) {
             if (change == MapView.REGION_IS_CHANGING) {
-                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK);
-                pluginResult.setKeepCallback(true);
-                callback.sendPluginResult(pluginResult);
+
+                cordova.getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                    PluginResult pluginResult;
+                    final JSONObject json = new JSONObject();
+                    try {
+                        CameraPosition cm = mapboxMap.getCameraPosition();
+                        json.put("lat", cm.target.getLatitude());
+                        json.put("lng", cm.target.getLongitude());
+
+                        pluginResult = new PluginResult(PluginResult.Status.OK, json);
+                        pluginResult.setKeepCallback(true);
+                        callback.sendPluginResult(pluginResult);
+                    } catch (JSONException e) {
+                        pluginResult = new PluginResult(PluginResult.Status.ERROR,
+                                "Error in callback of " + ACTION_ON_REGION_IS_CHANGING + ": " + e.getMessage());
+                        pluginResult.setKeepCallback(true);
+                        callback.sendPluginResult(pluginResult);
+                    }
+                    }
+                });
+
             }
         }
     }
