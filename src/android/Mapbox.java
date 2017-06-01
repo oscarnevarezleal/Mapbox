@@ -1,6 +1,9 @@
 package com.telerik.plugins.mapbox;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
+import android.animation.TypeEvaluator;
+import android.animation.ValueAnimator;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Build;
@@ -430,11 +433,22 @@ public class Mapbox extends CordovaPlugin {
                     @Override
                     public void run() {
                         try {
-                            final JSONObject position = args.getJSONObject(0);
-                            int index = args.getInt(1);
-                            List<Marker> markers = mapboxMap.getMarkers();
-                            Marker marker = markers.get(index);
-                            marker.setPosition(new LatLng(position.getDouble("lat"), position.getDouble("lng")));
+                            int index = args.getInt(0);
+                            final JSONObject position = args.getJSONObject(1);
+                            LatLng point = new LatLng(position.getDouble("lat"), position.getDouble("lng"));
+                            Marker marker = (Marker) mapboxMap.getAnnotation(index);
+
+                            if (marker == null) {
+                                callbackContext.error("No Such Marker identified with id " + index);
+                            }
+
+                            // When the user clicks on the map, we want to animate the marker to that
+                            // location.
+                            ValueAnimator markerAnimator = ObjectAnimator.ofObject(marker, "position",
+                                    new LatLngEvaluator(), marker.getPosition(), point);
+                            markerAnimator.setDuration(2000);
+                            markerAnimator.start();
+
                             callbackContext.success();
                         } catch (JSONException e) {
                             callbackContext.error(e.getMessage());
@@ -457,10 +471,13 @@ public class Mapbox extends CordovaPlugin {
 
             } else if (ACTION_REMOVE_ALL_MARKERS.equals(action)) {
                 if (mapboxMap != null) {
-
-                    mapboxMap.removeAnnotations();
-                    callbackContext.success();
-
+                    cordova.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mapboxMap.removeAnnotations();
+                            callbackContext.success();
+                        }
+                    });
                 }
 
             } else if (ACTION_ADD_MARKER_CALLBACK.equals(action)) {
@@ -680,4 +697,21 @@ public class Mapbox extends CordovaPlugin {
             mapView.onDestroy();
         }
     }
+
+    private static class LatLngEvaluator implements TypeEvaluator<LatLng> {
+        // Method is used to interpolate the marker animation.
+
+        private LatLng latLng = new LatLng();
+
+        @Override
+        public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
+            latLng.setLatitude(startValue.getLatitude()
+                    + ((endValue.getLatitude() - startValue.getLatitude()) * fraction));
+            latLng.setLongitude(startValue.getLongitude()
+                    + ((endValue.getLongitude() - startValue.getLongitude()) * fraction));
+            return latLng;
+        }
+    }
+
 }
+
