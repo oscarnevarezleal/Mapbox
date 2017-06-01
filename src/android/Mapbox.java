@@ -36,6 +36,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -461,8 +462,10 @@ public class Mapbox extends CordovaPlugin {
                     @Override
                     public void run() {
                         try {
-                            addMarkers(args.getJSONArray(0));
-                            callbackContext.success();
+                            final List<Marker> markerList = addMarkers(args.getJSONArray(0));
+                            JSONObject json = new JSONObject();
+                            json.put("markers", markerList.toArray());
+                            callbackContext.success(json);
                         } catch (JSONException e) {
                             callbackContext.error(e.getMessage());
                         }
@@ -509,15 +512,20 @@ public class Mapbox extends CordovaPlugin {
         return true;
     }
 
-    private void addMarkers(JSONArray markers) throws JSONException {
+    private List<Marker> addMarkers(JSONArray markers) throws JSONException {
+        List<Marker> markerList = new ArrayList<Marker>();
+
         for (int i = 0; i < markers.length(); i++) {
             final JSONObject marker = markers.getJSONObject(i);
             final MarkerOptions mo = new MarkerOptions();
             mo.title(marker.isNull("title") ? null : marker.getString("title"));
             mo.snippet(marker.isNull("subtitle") ? null : marker.getString("subtitle"));
             mo.position(new LatLng(marker.getDouble("lat"), marker.getDouble("lng")));
-            mapboxMap.addMarker(mo);
+            final Marker markerObject = mapboxMap.addMarker(mo);
+            markerList.add(i, markerObject);
         }
+
+        return markerList;
     }
 
     private class RegionWillChangeListener implements MapView.OnMapChangedListener {
