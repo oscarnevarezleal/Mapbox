@@ -447,7 +447,7 @@ public class Mapbox extends CordovaPlugin {
                             // location.
                             ValueAnimator markerAnimator = ObjectAnimator.ofObject(marker, "position",
                                     new LatLngEvaluator(), marker.getPosition(), point);
-                            markerAnimator.setDuration(2000);
+                            markerAnimator.setDuration(0);
                             markerAnimator.start();
 
                             callbackContext.success();
