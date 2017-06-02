@@ -451,8 +451,11 @@ public class Mapbox extends CordovaPlugin {
                             markerAnimator.start();
 
                             callbackContext.success();
+
                         } catch (JSONException e) {
-                            callbackContext.error(e.getMessage());
+
+                            final PluginResult result = new PluginResult(PluginResult.Status.ERROR, e.getMessage());
+                            result.setKeepCallback(true);
                         }
                     }
                 });
@@ -465,10 +468,6 @@ public class Mapbox extends CordovaPlugin {
                             JSONObject json = new JSONObject();
                             final List<Integer> markerList = addMarkers(args.getJSONArray(0));
                             json.put("size", markerList.size());
-                            for (int i = 0; i < markerList.size(); i++) {
-                                json.put("marker_" + i, markerList.get(i));
-                            }
-                            json.put("markers", markerList.toArray());
                             callbackContext.success(json);
                         } catch (JSONException e) {
                             callbackContext.error(e.getMessage());
