@@ -462,8 +462,12 @@ public class Mapbox extends CordovaPlugin {
                     @Override
                     public void run() {
                         try {
-                            final List<Integer> markerList = addMarkers(args.getJSONArray(0));
                             JSONObject json = new JSONObject();
+                            final List<Integer> markerList = addMarkers(args.getJSONArray(0));
+                            json.put("size", markerList.size());
+                            for (int i = 0; i < markerList.size(); i++) {
+                                json.put("marker_" + i, markerList.get(i));
+                            }
                             json.put("markers", markerList.toArray());
                             callbackContext.success(json);
                         } catch (JSONException e) {
